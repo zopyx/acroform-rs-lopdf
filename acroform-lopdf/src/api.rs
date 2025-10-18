@@ -49,8 +49,8 @@ impl AcroFormDocument {
         let acroform_ref = self.doc.catalog()?.get(b"AcroForm")?.as_reference()?;
 
         // Update each field
-        for (field_name, new_value) in values {
-            if let Some(field_ref) = self.find_field_by_name(&field_name)? {
+        for (field_name, new_value) in &values {
+            if let Some(field_ref) = self.find_field_by_name(field_name)? {
                 // Update field value
                 let field_dict = self.doc.get_dictionary_mut(field_ref)?;
                 field_dict.set("V", new_value.to_object());
@@ -59,8 +59,14 @@ impl AcroFormDocument {
                 if matches!(new_value, FieldValue::Choice(_) | FieldValue::Boolean(_)) {
                     field_dict.set("AS", new_value.to_object());
                 }
+
+                // Update widget annotations in the field's Kids array
+                self.update_field_widget_kids(field_ref, new_value)?;
             }
         }
+
+        // Update widget annotations on pages that reference the same fields
+        self.update_page_widget_annotations(&values)?;
 
         // Set NeedAppearances flag
         let acroform = self.doc.get_dictionary_mut(acroform_ref)?;
@@ -70,6 +76,119 @@ impl AcroFormDocument {
         let mut buffer = Vec::new();
         self.doc.save_to(&mut buffer)?;
         Ok(buffer)
+    }
+
+    /// Update widget annotations in a field's Kids array
+    fn update_field_widget_kids(
+        &mut self,
+        field_ref: ObjectId,
+        new_value: &FieldValue,
+    ) -> Result<()> {
+        // Get the field dictionary to check for Kids
+        let field_dict = self.doc.get_dictionary(field_ref)?;
+
+        // Get Kids array if it exists
+        let kids_array = match field_dict.get(b"Kids").and_then(|obj| obj.as_array()) {
+            Ok(arr) => arr.clone(),
+            Err(_) => return Ok(()), // No Kids, nothing to update
+        };
+
+        // Update each kid that is a widget
+        for kid_obj in kids_array {
+            if let Ok(kid_ref) = kid_obj.as_reference() {
+                let kid_dict = match self.doc.get_dictionary(kid_ref) {
+                    Ok(dict) => dict,
+                    Err(_) => continue,
+                };
+
+                // Check if this is a widget annotation
+                let is_widget = kid_dict
+                    .get(b"Subtype")
+                    .and_then(|obj| obj.as_name())
+                    .map(|name| name == b"Widget")
+                    .unwrap_or(false);
+
+                if is_widget {
+                    // Update the widget annotation value
+                    let kid_dict_mut = self.doc.get_dictionary_mut(kid_ref)?;
+                    kid_dict_mut.set("V", new_value.to_object());
+
+                    // Update appearance state for buttons/choices
+                    if matches!(new_value, FieldValue::Choice(_) | FieldValue::Boolean(_)) {
+                        kid_dict_mut.set("AS", new_value.to_object());
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Update widget annotations on pages to match field values
+    fn update_page_widget_annotations(&mut self, values: &HashMap<String, FieldValue>) -> Result<()> {
+        // Get all pages
+        let pages = self.doc.get_pages();
+        let page_ids: Vec<ObjectId> = pages.values().copied().collect();
+
+        for page_id in page_ids {
+            // Get page dictionary
+            let page_dict = match self.doc.get_dictionary(page_id) {
+                Ok(dict) => dict,
+                Err(_) => continue,
+            };
+
+            // Get annotations array if it exists
+            let annots_array = match page_dict.get(b"Annots").and_then(|obj| obj.as_array()) {
+                Ok(arr) => arr.clone(),
+                Err(_) => continue,
+            };
+
+            // Check each annotation
+            for annot_obj in annots_array {
+                if let Ok(annot_ref) = annot_obj.as_reference() {
+                    // Get annotation dictionary
+                    let annot_dict = match self.doc.get_dictionary(annot_ref) {
+                        Ok(dict) => dict,
+                        Err(_) => continue,
+                    };
+
+                    // Check if this is a widget annotation
+                    let is_widget = annot_dict
+                        .get(b"Subtype")
+                        .and_then(|obj| obj.as_name())
+                        .map(|name| name == b"Widget")
+                        .unwrap_or(false);
+
+                    if !is_widget {
+                        continue;
+                    }
+
+                    // Get the field name from the annotation
+                    let field_name = match annot_dict
+                        .get(b"T")
+                        .and_then(|obj| obj.as_str())
+                        .map(decode_text_string)
+                    {
+                        Ok(name) => name,
+                        Err(_) => continue,
+                    };
+
+                    // Check if we're updating this field
+                    if let Some(new_value) = values.get(&field_name) {
+                        // Update the annotation value
+                        let annot_dict_mut = self.doc.get_dictionary_mut(annot_ref)?;
+                        annot_dict_mut.set("V", new_value.to_object());
+
+                        // Update appearance state for buttons/choices
+                        if matches!(new_value, FieldValue::Choice(_) | FieldValue::Boolean(_)) {
+                            annot_dict_mut.set("AS", new_value.to_object());
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(())
     }
 
     /// Fill form fields with values and save to a file

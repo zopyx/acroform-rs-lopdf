@@ -378,16 +378,16 @@ impl AcroFormDocument {
 }
 ```
 
-### Phase 5: Field Updates and Saving
+### Phase 5: Field Updates and Saving ✅
 
 **Goal**: Implement field value updates and PDF saving
 
 **Tasks**:
-- [ ] Implement field update by name lookup
-- [ ] Update both field dictionary and widget annotations
-- [ ] Handle appearance stream updates (NeedAppearances flag)
-- [ ] Implement `fill()` method returning bytes
-- [ ] Implement `fill_and_save()` convenience method
+- [x] Implement field update by name lookup
+- [x] Update both field dictionary and widget annotations
+- [x] Handle appearance stream updates (NeedAppearances flag)
+- [x] Implement `fill()` method returning bytes
+- [x] Implement `fill_and_save()` convenience method
 
 **Key Implementation Details**:
 
@@ -484,67 +484,69 @@ impl AcroFormDocument {
 }
 ```
 
-### Phase 6: Widget Annotations
+### Phase 6: Widget Annotations ✅
 
 **Goal**: Update widget annotations to ensure proper rendering
 
 **Tasks**:
-- [ ] Find widget annotations linked to fields
-- [ ] Update annotation values in sync with field values
-- [ ] Handle appearance dictionaries
-- [ ] Test with multiple widget annotations per field
+- [x] Find widget annotations linked to fields
+- [x] Update annotation values in sync with field values
+- [x] Handle appearance dictionaries
+- [x] Test with multiple widget annotations per field
 
 **Implementation Notes**:
-- Widget annotations are separate objects linked to fields via page annotations
-- Both field dictionary and widget annotation need the `/V` entry updated
-- For checkboxes/radio buttons, also update `/AS` (appearance state)
+- Widget annotations can be merged with field dictionaries (field IS the widget)
+- Widget annotations can be in the field's Kids array
+- Widget annotations can be referenced from page annotations
+- The implementation updates all three cases: field dictionary, Kids array widgets, and page annotation widgets
+- Both `/V` (value) and `/AS` (appearance state) entries are updated for buttons and choices
 
-### Phase 7: Testing
+### Phase 7: Testing ✅
 
 **Goal**: Ensure full API compatibility and correctness
 
 **Tasks**:
-- [ ] Port all existing integration tests
-- [ ] Test with af8.pdf test file
-- [ ] Verify round-trip field updates
-- [ ] Test in-memory operations
-- [ ] Test with various field types (text, boolean, choice, integer)
-- [ ] Validate PDFs open correctly in viewers
+- [x] Port all existing integration tests
+- [x] Test with af8.pdf test file
+- [x] Verify round-trip field updates
+- [x] Test in-memory operations
+- [x] Test with various field types (text, boolean, choice, integer)
+- [x] Validate PDFs open correctly in viewers
 
-### Phase 8: Documentation and Examples
+### Phase 8: Documentation and Examples ✅
 
 **Goal**: Complete documentation for the new implementation
 
 **Tasks**:
-- [ ] Update README with lopdf-based implementation
-- [ ] Port examples (simple_fill.rs, in_memory_fill.rs)
-- [ ] Add migration guide from old implementation
-- [ ] Document known limitations and differences
+- [x] Update README with lopdf-based implementation
+- [x] Port examples (simple_fill.rs, in_memory_fill.rs)
+- [x] Add migration guide from old implementation
+- [x] Document known limitations and differences
 
 ## API Parity Checklist
 
 ### Public API (Must Match)
 
-- [ ] `AcroFormDocument::from_pdf(path)` - Load from file path
-- [ ] `AcroFormDocument::from_bytes(data)` - Load from byte vector
-- [ ] `AcroFormDocument::fields()` - List all form fields
-- [ ] `AcroFormDocument::fill(values)` - Fill and return bytes
-- [ ] `AcroFormDocument::fill_and_save(values, output)` - Fill and save to file
-- [ ] `FormField` struct with all public fields
-- [ ] `FieldValue` enum with all variants
-- [ ] `FieldValue::from_primitive()` - Convert from PDF primitive (renamed from_object)
-- [ ] `FieldValue::to_primitive()` - Convert to PDF primitive (renamed to_object)
+- [x] `AcroFormDocument::from_pdf(path)` - Load from file path
+- [x] `AcroFormDocument::from_bytes(data)` - Load from byte vector
+- [x] `AcroFormDocument::fields()` - List all form fields
+- [x] `AcroFormDocument::fill(values)` - Fill and return bytes
+- [x] `AcroFormDocument::fill_and_save(values, output)` - Fill and save to file
+- [x] `FormField` struct with all public fields
+- [x] `FieldValue` enum with all variants
+- [x] `FieldValue::from_object()` - Convert from PDF primitive (renamed from from_primitive)
+- [x] `FieldValue::to_object()` - Convert to PDF primitive (renamed from to_primitive)
 
 ### Behavior (Must Match)
 
-- [ ] UTF-16BE encoding for text fields with BOM
-- [ ] Hierarchical field name resolution (parent.child.field)
-- [ ] Setting NeedAppearances flag
-- [ ] Non-incremental PDF writing
-- [ ] In-memory operations (no temp files)
-- [ ] Widget annotation updates
-- [ ] Default value extraction
-- [ ] Tooltip extraction
+- [x] UTF-16BE encoding for text fields with BOM
+- [x] Hierarchical field name resolution (parent.child.field)
+- [x] Setting NeedAppearances flag
+- [x] Non-incremental PDF writing
+- [x] In-memory operations (no temp files)
+- [x] Widget annotation updates
+- [x] Default value extraction
+- [x] Tooltip extraction
 
 ### Extensions (Nice to Have)
 

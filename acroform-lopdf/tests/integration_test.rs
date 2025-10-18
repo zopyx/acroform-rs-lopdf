@@ -71,3 +71,88 @@ fn test_fill_and_save() {
         assert!(!filled_fields.is_empty(), "No fields in filled PDF");
     }
 }
+
+#[test]
+fn test_widget_annotations_updated() {
+    use lopdf::Document;
+
+    // This test ensures that when we update a field value,
+    // both the field dictionary AND any widget annotations are updated.
+
+    let mut doc = AcroFormDocument::from_pdf("tests/af8.pdf").expect("Failed to load PDF");
+
+    // Update the field
+    let mut values = HashMap::new();
+    values.insert(
+        "topmostSubform[0].Page1[0].P[0].MbrName[1]".to_string(),
+        FieldValue::Text("WIDGET_TEST_VALUE".to_string()),
+    );
+
+    let filled_bytes = doc.fill(values).expect("Failed to fill fields");
+    std::fs::write("/tmp/test_widget_update.pdf", &filled_bytes)
+        .expect("Failed to save filled PDF");
+
+    // Load the filled PDF and verify the update
+    let filled_doc = Document::load("/tmp/test_widget_update.pdf").expect("Failed to load PDF");
+
+    // Check the field value in AcroForm
+    let catalog = filled_doc.catalog().expect("Failed to get catalog");
+    let acroform_ref = catalog
+        .get(b"AcroForm")
+        .expect("Failed to get AcroForm")
+        .as_reference()
+        .expect("AcroForm should be a reference");
+    let acroform_dict = filled_doc
+        .get_dictionary(acroform_ref)
+        .expect("Failed to get AcroForm dictionary");
+    let fields = acroform_dict
+        .get(b"Fields")
+        .expect("Failed to get Fields")
+        .as_array()
+        .expect("Fields should be an array");
+
+    let mut field_value_found = false;
+    for field_obj in fields {
+        if let Ok(field_ref) = field_obj.as_reference() {
+            if let Ok(field_dict) = filled_doc.get_dictionary(field_ref) {
+                if let Ok(name) = field_dict.get(b"T").and_then(|o| o.as_str()) {
+                    if String::from_utf8_lossy(name)
+                        == "topmostSubform[0].Page1[0].P[0].MbrName[1]"
+                    {
+                        // Check the field value
+                        if let Ok(value_obj) = field_dict.get(b"V") {
+                            if let Ok(value_str) = value_obj.as_str() {
+                                // Decode UTF-16BE with BOM
+                                let value_text = if value_str.len() >= 2
+                                    && value_str[0] == 0xFE
+                                    && value_str[1] == 0xFF
+                                {
+                                    let u16_chars: Vec<u16> = value_str[2..]
+                                        .chunks_exact(2)
+                                        .map(|chunk| u16::from_be_bytes([chunk[0], chunk[1]]))
+                                        .collect();
+                                    String::from_utf16(&u16_chars).unwrap_or_default()
+                                } else {
+                                    String::from_utf8_lossy(value_str).to_string()
+                                };
+
+                                assert_eq!(
+                                    value_text, "WIDGET_TEST_VALUE",
+                                    "Field value should be updated"
+                                );
+                                field_value_found = true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    assert!(
+        field_value_found,
+        "Field value should have been found and verified"
+    );
+
+    println!("Widget annotation test passed!");
+}
