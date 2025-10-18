@@ -13,8 +13,8 @@ push-remote = "origin"
 
 # Versioning + commits/tags
 #dependent-version = "upgrade"              # auto-update intra-workspace dependency versions
-consolidate-commits = true                 # single bump commit for the workspace
-pre-release-commit-message = "chore: release {{version}}"
+#consolidate-commits = true                 # single bump commit for the workspace
+pre-release-commit-message = "chore: release"
 tag-name = "v{{version}}"
 tag-message = "Release {{version}}"
 
