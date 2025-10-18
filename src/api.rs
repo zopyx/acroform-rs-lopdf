@@ -73,6 +73,12 @@ impl AcroFormDocument {
         let acroform = self.doc.get_dictionary_mut(acroform_ref)?;
         acroform.set("NeedAppearances", Object::Boolean(true));
 
+        //Set trailer Info
+        let mut info = Dictionary::new();
+        info.set("Title", Object::string_literal("form"));
+        info.set("Creator", Object::string_literal("Quillmark Acroform"));
+        self.doc.trailer.set("Info", Object::Dictionary(info));
+
         // Save to bytes
         let mut buffer = Vec::new();
         self.doc.save_to(&mut buffer)?;
