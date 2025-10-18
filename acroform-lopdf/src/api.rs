@@ -54,6 +54,7 @@ impl AcroFormDocument {
                 // Update field value
                 let field_dict = self.doc.get_dictionary_mut(field_ref)?;
                 field_dict.set("V", new_value.to_object());
+                field_dict.set("DV", new_value.to_object());
 
                 // Update appearance state for buttons/choices
                 if matches!(new_value, FieldValue::Choice(_) | FieldValue::Boolean(_)) {
@@ -112,6 +113,7 @@ impl AcroFormDocument {
                     // Update the widget annotation value
                     let kid_dict_mut = self.doc.get_dictionary_mut(kid_ref)?;
                     kid_dict_mut.set("V", new_value.to_object());
+                    kid_dict_mut.set("DV", new_value.to_object());
 
                     // Update appearance state for buttons/choices
                     if matches!(new_value, FieldValue::Choice(_) | FieldValue::Boolean(_)) {
@@ -125,7 +127,10 @@ impl AcroFormDocument {
     }
 
     /// Update widget annotations on pages to match field values
-    fn update_page_widget_annotations(&mut self, values: &HashMap<String, FieldValue>) -> Result<()> {
+    fn update_page_widget_annotations(
+        &mut self,
+        values: &HashMap<String, FieldValue>,
+    ) -> Result<()> {
         // Get all pages
         let pages = self.doc.get_pages();
         let page_ids: Vec<ObjectId> = pages.values().copied().collect();
@@ -138,8 +143,24 @@ impl AcroFormDocument {
             };
 
             // Get annotations array if it exists
-            let annots_array = match page_dict.get(b"Annots").and_then(|obj| obj.as_array()) {
-                Ok(arr) => arr.clone(),
+            let annots_array = match page_dict.get(b"Annots") {
+                Ok(annots_obj) => {
+                    // Handle both direct arrays and references to arrays
+                    match annots_obj {
+                        Object::Array(arr) => arr.clone(),
+                        Object::Reference(annots_ref) => {
+                            match self
+                                .doc
+                                .get_object(*annots_ref)
+                                .and_then(|obj| obj.as_array())
+                            {
+                                Ok(arr) => arr.clone(),
+                                Err(_) => continue,
+                            }
+                        }
+                        _ => continue,
+                    }
+                }
                 Err(_) => continue,
             };
 
@@ -178,6 +199,7 @@ impl AcroFormDocument {
                         // Update the annotation value
                         let annot_dict_mut = self.doc.get_dictionary_mut(annot_ref)?;
                         annot_dict_mut.set("V", new_value.to_object());
+                        annot_dict_mut.set("DV", new_value.to_object());
 
                         // Update appearance state for buttons/choices
                         if matches!(new_value, FieldValue::Choice(_) | FieldValue::Boolean(_)) {
@@ -368,10 +390,7 @@ fn traverse_field_tree(
         let current_value =
             get_field_value(field_dict).and_then(|obj| FieldValue::from_object(&obj));
 
-        let default_value = field_dict
-            .get(b"DV")
-            .ok()
-            .and_then(FieldValue::from_object);
+        let default_value = field_dict.get(b"DV").ok().and_then(FieldValue::from_object);
 
         let flags = field_dict
             .get(b"Ff")

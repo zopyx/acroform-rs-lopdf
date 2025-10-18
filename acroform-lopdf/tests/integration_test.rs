@@ -116,8 +116,7 @@ fn test_widget_annotations_updated() {
         if let Ok(field_ref) = field_obj.as_reference() {
             if let Ok(field_dict) = filled_doc.get_dictionary(field_ref) {
                 if let Ok(name) = field_dict.get(b"T").and_then(|o| o.as_str()) {
-                    if String::from_utf8_lossy(name)
-                        == "topmostSubform[0].Page1[0].P[0].MbrName[1]"
+                    if String::from_utf8_lossy(name) == "topmostSubform[0].Page1[0].P[0].MbrName[1]"
                     {
                         // Check the field value
                         if let Ok(value_obj) = field_dict.get(b"V") {
