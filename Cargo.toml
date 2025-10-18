@@ -1,5 +1,5 @@
 [package]
-name = "acroform-lopdf"
+name = "acroform"
 version = "0.1.0"
 authors = ["acroform-rs contributors"]
 repository = "https://github.com/nibsbin/acroform-rs-lopdf"

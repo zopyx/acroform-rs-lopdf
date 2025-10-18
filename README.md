@@ -1,4 +1,4 @@
-# acroform-lopdf
+# acroform
 
 A high-level PDF form manipulation library using [lopdf](https://github.com/J-F-Liu/lopdf).
 
@@ -20,7 +20,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-acroform-lopdf = "0.1.0"
+acroform = "0.1.0"
 ```
 
 ## Example

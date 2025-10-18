@@ -151,7 +151,7 @@ impl Dictionary {
 **Goal**: Set up new crate structure and dependencies
 
 **Tasks**:
-- [x] Create new `acroform-lopdf/` directory at repository root
+- [x] Create new `acroform/` directory at repository root
 - [x] Create `Cargo.toml` with `lopdf = "0.38.0"` dependency
 - [x] Copy existing API structure (lib.rs, api.rs, field.rs skeleton)
 - [x] Set up basic module structure and re-exports
@@ -638,7 +638,7 @@ acroform = "0.2.0"  # or appropriate version
 ### For Library Maintainers
 
 1. Keep old implementation in `acroform-rs-old/` for reference
-2. Develop new implementation in `acroform-lopdf/` or root `acroform/`
+2. Develop new implementation in `acroform/` or root `acroform/`
 3. Run parallel testing with both implementations
 4. When stable, replace old implementation
 

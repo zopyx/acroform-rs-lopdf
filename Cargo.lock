@@ -3,7 +3,7 @@
 version = 4
 
 [[package]]
-name = "acroform-lopdf"
+name = "acroform"
 version = "0.1.0"
 dependencies = [
  "lopdf",

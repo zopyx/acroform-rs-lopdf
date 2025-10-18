@@ -1,4 +1,4 @@
-//! # acroform-lopdf
+//! # acroform
 //!
 //! A high-level PDF form manipulation library using lopdf.
 //!
