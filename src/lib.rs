@@ -8,7 +8,7 @@
 //! ## Example
 //!
 //! ```no_run
-//! use acroform_lopdf::{AcroFormDocument, FieldValue};
+//! use acroform::{AcroFormDocument, FieldValue};
 //! use std::collections::HashMap;
 //!
 //! # fn main() -> Result<(), Box<dyn std::error::Error>> {

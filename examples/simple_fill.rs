@@ -1,4 +1,4 @@
-use acroform_lopdf::{AcroFormDocument, FieldValue};
+use acroform::{AcroFormDocument, FieldValue};
 use std::collections::HashMap;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -21,7 +21,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Find and fill the first text field
     if let Some(field) = fields
         .iter()
-        .find(|f| matches!(f.field_type, acroform_lopdf::FieldType::Text))
+        .find(|f| matches!(f.field_type, acroform::FieldType::Text))
     {
         println!("\nFilling field '{}' with new value", field.name);
         values.insert(

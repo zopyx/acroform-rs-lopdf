@@ -1,4 +1,4 @@
-use acroform_lopdf::{AcroFormDocument, FieldValue};
+use acroform::{AcroFormDocument, FieldValue};
 use std::collections::HashMap;
 
 #[test]
@@ -44,7 +44,7 @@ fn test_fill_and_save() {
     // Try to fill the first text field we find
     for field in fields {
         match field.field_type {
-            acroform_lopdf::FieldType::Text => {
+            acroform::FieldType::Text => {
                 values.insert(
                     field.name.clone(),
                     FieldValue::Text("Test Value".to_string()),
