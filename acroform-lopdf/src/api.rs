@@ -54,6 +54,7 @@ impl AcroFormDocument {
                 // Update field value
                 let field_dict = self.doc.get_dictionary_mut(field_ref)?;
                 field_dict.set("V", new_value.to_object());
+                field_dict.set("DV", new_value.to_object());
 
                 // Update appearance state for buttons/choices
                 if matches!(new_value, FieldValue::Choice(_) | FieldValue::Boolean(_)) {
@@ -112,6 +113,7 @@ impl AcroFormDocument {
                     // Update the widget annotation value
                     let kid_dict_mut = self.doc.get_dictionary_mut(kid_ref)?;
                     kid_dict_mut.set("V", new_value.to_object());
+                    kid_dict_mut.set("DV", new_value.to_object());
 
                     // Update appearance state for buttons/choices
                     if matches!(new_value, FieldValue::Choice(_) | FieldValue::Boolean(_)) {
@@ -178,6 +180,7 @@ impl AcroFormDocument {
                         // Update the annotation value
                         let annot_dict_mut = self.doc.get_dictionary_mut(annot_ref)?;
                         annot_dict_mut.set("V", new_value.to_object());
+                        annot_dict_mut.set("DV", new_value.to_object());
 
                         // Update appearance state for buttons/choices
                         if matches!(new_value, FieldValue::Choice(_) | FieldValue::Boolean(_)) {
