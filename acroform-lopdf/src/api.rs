@@ -127,7 +127,10 @@ impl AcroFormDocument {
     }
 
     /// Update widget annotations on pages to match field values
-    fn update_page_widget_annotations(&mut self, values: &HashMap<String, FieldValue>) -> Result<()> {
+    fn update_page_widget_annotations(
+        &mut self,
+        values: &HashMap<String, FieldValue>,
+    ) -> Result<()> {
         // Get all pages
         let pages = self.doc.get_pages();
         let page_ids: Vec<ObjectId> = pages.values().copied().collect();
@@ -146,7 +149,11 @@ impl AcroFormDocument {
                     match annots_obj {
                         Object::Array(arr) => arr.clone(),
                         Object::Reference(annots_ref) => {
-                            match self.doc.get_object(*annots_ref).and_then(|obj| obj.as_array()) {
+                            match self
+                                .doc
+                                .get_object(*annots_ref)
+                                .and_then(|obj| obj.as_array())
+                            {
                                 Ok(arr) => arr.clone(),
                                 Err(_) => continue,
                             }
@@ -383,10 +390,7 @@ fn traverse_field_tree(
         let current_value =
             get_field_value(field_dict).and_then(|obj| FieldValue::from_object(&obj));
 
-        let default_value = field_dict
-            .get(b"DV")
-            .ok()
-            .and_then(FieldValue::from_object);
+        let default_value = field_dict.get(b"DV").ok().and_then(FieldValue::from_object);
 
         let flags = field_dict
             .get(b"Ff")
