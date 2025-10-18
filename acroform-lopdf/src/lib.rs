@@ -60,7 +60,11 @@ impl std::fmt::Display for Error {
             Error::Lopdf(e) => write!(f, "PDF error: {}", e),
             Error::MissingField { field } => write!(f, "Field not found: {}", field),
             Error::InvalidFieldType { expected, found } => {
-                write!(f, "Invalid field type: expected {}, found {}", expected, found)
+                write!(
+                    f,
+                    "Invalid field type: expected {}, found {}",
+                    expected, found
+                )
             }
             Error::Io(e) => write!(f, "IO error: {}", e),
         }

@@ -27,10 +27,10 @@ impl AcroFormDocument {
     /// Get all form fields in the document
     pub fn fields(&self) -> Result<Vec<FormField>> {
         let mut results = Vec::new();
-        
+
         // Get AcroForm dictionary
         let acroform = get_acroform_dict(&self.doc)?;
-        
+
         // Traverse Fields array
         if let Ok(fields_array) = acroform.get(b"Fields").and_then(|obj| obj.as_array()) {
             for field_obj in fields_array {
@@ -39,35 +39,33 @@ impl AcroFormDocument {
                 }
             }
         }
-        
+
         Ok(results)
     }
 
     /// Fill form fields with values and return the modified PDF as bytes
     pub fn fill(&mut self, values: HashMap<String, FieldValue>) -> Result<Vec<u8>> {
         // Get AcroForm reference
-        let acroform_ref = self.doc.catalog()?
-            .get(b"AcroForm")?
-            .as_reference()?;
-        
+        let acroform_ref = self.doc.catalog()?.get(b"AcroForm")?.as_reference()?;
+
         // Update each field
         for (field_name, new_value) in values {
             if let Some(field_ref) = self.find_field_by_name(&field_name)? {
                 // Update field value
                 let field_dict = self.doc.get_dictionary_mut(field_ref)?;
                 field_dict.set("V", new_value.to_object());
-                
+
                 // Update appearance state for buttons/choices
                 if matches!(new_value, FieldValue::Choice(_) | FieldValue::Boolean(_)) {
                     field_dict.set("AS", new_value.to_object());
                 }
             }
         }
-        
+
         // Set NeedAppearances flag
         let acroform = self.doc.get_dictionary_mut(acroform_ref)?;
         acroform.set("NeedAppearances", Object::Boolean(true));
-        
+
         // Save to bytes
         let mut buffer = Vec::new();
         self.doc.save_to(&mut buffer)?;
@@ -108,7 +106,7 @@ impl AcroFormDocument {
         parent_name: Option<String>,
     ) -> Result<Option<ObjectId>> {
         let field_dict = self.doc.get_dictionary(field_ref)?;
-        
+
         let field_name = get_field_name(field_dict);
         let full_name = match (parent_name, field_name) {
             (Some(p), Some(n)) => format!("{}.{}", p, n),
@@ -116,22 +114,24 @@ impl AcroFormDocument {
             (Some(p), None) => p,
             (None, None) => String::new(),
         };
-        
+
         if full_name == target_name {
             return Ok(Some(field_ref));
         }
-        
+
         // Search children
         if let Ok(kids) = field_dict.get(b"Kids").and_then(|obj| obj.as_array()) {
             for kid_obj in kids {
                 if let Ok(kid_ref) = kid_obj.as_reference() {
-                    if let Some(found) = self.search_field_tree(kid_ref, target_name, Some(full_name.clone()))? {
+                    if let Some(found) =
+                        self.search_field_tree(kid_ref, target_name, Some(full_name.clone()))?
+                    {
                         return Ok(Some(found));
                     }
                 }
             }
         }
-        
+
         Ok(None)
     }
 }
@@ -170,9 +170,7 @@ impl FieldValue {
     /// Create a FieldValue from a PDF object
     pub fn from_object(obj: &Object) -> Option<Self> {
         match obj {
-            Object::String(bytes, _) => {
-                Some(FieldValue::Text(decode_text_string(bytes)))
-            }
+            Object::String(bytes, _) => Some(FieldValue::Text(decode_text_string(bytes))),
             Object::Integer(i) => Some(FieldValue::Integer(*i as i32)),
             Object::Name(n) => Some(FieldValue::Choice(String::from_utf8_lossy(n).to_string())),
             Object::Boolean(b) => Some(FieldValue::Boolean(*b)),
@@ -206,7 +204,8 @@ fn get_acroform_dict(doc: &Document) -> Result<&Dictionary> {
 
 /// Get the field type from a field dictionary
 fn get_field_type(field_dict: &Dictionary) -> Option<String> {
-    field_dict.get(b"FT")
+    field_dict
+        .get(b"FT")
         .ok()
         .and_then(|obj| obj.as_name().ok())
         .map(|bytes| String::from_utf8_lossy(bytes).to_string())
@@ -214,10 +213,11 @@ fn get_field_type(field_dict: &Dictionary) -> Option<String> {
 
 /// Get the field name from a field dictionary
 fn get_field_name(field_dict: &Dictionary) -> Option<String> {
-    field_dict.get(b"T")
+    field_dict
+        .get(b"T")
         .ok()
         .and_then(|obj| obj.as_str().ok())
-        .map(|bytes| decode_text_string(bytes))
+        .map(decode_text_string)
 }
 
 /// Get the field value from a field dictionary
@@ -233,7 +233,7 @@ fn traverse_field_tree(
     results: &mut Vec<FormField>,
 ) -> Result<()> {
     let field_dict = doc.get_dictionary(field_ref)?;
-    
+
     // Get field name
     let field_name = get_field_name(field_dict);
     let full_name = match (parent_name.clone(), field_name) {
@@ -242,27 +242,30 @@ fn traverse_field_tree(
         (Some(p), None) => p,
         (None, None) => String::new(),
     };
-    
+
     // Check if this is a terminal field (has FT key)
     if let Some(field_type_name) = get_field_type(field_dict) {
         // Extract field information
-        let current_value = get_field_value(field_dict)
-            .and_then(|obj| FieldValue::from_object(&obj));
-        
-        let default_value = field_dict.get(b"DV")
+        let current_value =
+            get_field_value(field_dict).and_then(|obj| FieldValue::from_object(&obj));
+
+        let default_value = field_dict
+            .get(b"DV")
             .ok()
-            .and_then(|obj| FieldValue::from_object(obj));
-        
-        let flags = field_dict.get(b"Ff")
+            .and_then(FieldValue::from_object);
+
+        let flags = field_dict
+            .get(b"Ff")
             .ok()
             .and_then(|obj| obj.as_i64().ok())
             .unwrap_or(0) as u32;
-        
-        let tooltip = field_dict.get(b"TU")
+
+        let tooltip = field_dict
+            .get(b"TU")
             .ok()
             .and_then(|obj| obj.as_str().ok())
-            .map(|bytes| decode_text_string(bytes));
-        
+            .map(decode_text_string);
+
         results.push(FormField {
             name: full_name.clone(),
             field_type: FieldType::from_name(&field_type_name),
@@ -272,7 +275,7 @@ fn traverse_field_tree(
             tooltip,
         });
     }
-    
+
     // Recursively process children (Kids array)
     if let Ok(kids) = field_dict.get(b"Kids").and_then(|obj| obj.as_array()) {
         for kid_obj in kids {
@@ -281,7 +284,7 @@ fn traverse_field_tree(
             }
         }
     }
-    
+
     Ok(())
 }
 

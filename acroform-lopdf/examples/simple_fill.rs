@@ -17,11 +17,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Fill fields with new values
     let mut values = HashMap::new();
-    
+
     // Find and fill the first text field
-    if let Some(field) = fields.iter().find(|f| matches!(f.field_type, acroform_lopdf::FieldType::Text)) {
+    if let Some(field) = fields
+        .iter()
+        .find(|f| matches!(f.field_type, acroform_lopdf::FieldType::Text))
+    {
         println!("\nFilling field '{}' with new value", field.name);
-        values.insert(field.name.clone(), FieldValue::Text("NEW_VALUE".to_string()));
+        values.insert(
+            field.name.clone(),
+            FieldValue::Text("NEW_VALUE".to_string()),
+        );
     }
 
     // Save the filled PDF
