@@ -140,8 +140,20 @@ impl AcroFormDocument {
             };
 
             // Get annotations array if it exists
-            let annots_array = match page_dict.get(b"Annots").and_then(|obj| obj.as_array()) {
-                Ok(arr) => arr.clone(),
+            let annots_array = match page_dict.get(b"Annots") {
+                Ok(annots_obj) => {
+                    // Handle both direct arrays and references to arrays
+                    match annots_obj {
+                        Object::Array(arr) => arr.clone(),
+                        Object::Reference(annots_ref) => {
+                            match self.doc.get_object(*annots_ref).and_then(|obj| obj.as_array()) {
+                                Ok(arr) => arr.clone(),
+                                Err(_) => continue,
+                            }
+                        }
+                        _ => continue,
+                    }
+                }
                 Err(_) => continue,
             };
 
