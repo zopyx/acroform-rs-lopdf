@@ -30,6 +30,9 @@ dependencies = []
 [project.optional-dependencies]
 dev = ["pytest", "maturin", "mypy", "ruff"]
 
+[project.scripts]
+pdf-forms = "pdf_forms.cli:main"
+
 [project.urls]
 Homepage = "https://github.com/nibsbin/acroform-rs-lopdf"
 Repository = "https://github.com/nibsbin/acroform-rs-lopdf"
