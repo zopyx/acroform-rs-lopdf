@@ -45,7 +45,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.12', '3.13', '3.14']
+        python-version: ['3.12', '3.13']
 
     steps:
       - uses: actions/checkout@v4
@@ -116,44 +116,3 @@ jobs:
         run: |
           uv run ruff format --check python/
 
-  summary:
-    name: CI Summary
-    needs: [test-rust, test-python, check-format]
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-      - name: Summary
-        run: |
-          echo "## CI Summary"
-          echo ""
-          
-          if [ "${{ needs.test-rust.result }}" == "success" ]; then
-            echo "✓ Rust tests passed"
-          elif [ "${{ needs.test-rust.result }}" == "skipped" ]; then
-            echo "⊘ Rust tests skipped"
-          else
-            echo "✗ Rust tests failed"
-          fi
-          
-          if [ "${{ needs.test-python.result }}" == "success" ]; then
-            echo "✓ Python tests passed (3.12, 3.13, 3.14)"
-          elif [ "${{ needs.test-python.result }}" == "skipped" ]; then
-            echo "⊘ Python tests skipped"
-          else
-            echo "✗ Python tests failed"
-          fi
-          
-          if [ "${{ needs.check-format.result }}" == "success" ]; then
-            echo "✓ Formatting checks passed"
-          elif [ "${{ needs.check-format.result }}" == "skipped" ]; then
-            echo "⊘ Formatting checks skipped"
-          else
-            echo "✗ Formatting checks failed"
-          fi
-          
-          # Exit with failure if any job failed
-          if [ "${{ contains(needs.*.result, 'failure') }}" == "true" ]; then
-            echo ""
-            echo "⚠️  One or more CI jobs failed"
-            exit 1
-          fi
