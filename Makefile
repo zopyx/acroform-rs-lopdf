@@ -147,3 +147,17 @@ build-wheels-macos: ## Build wheels for macOS (CI use)
 
 build-wheels-linux: ## Build wheels for Linux (CI use, requires Linux runner)
 	$(MATURIN) build --release $(MATURIN_INTERPRETERS)
+
+# Publish targets
+publish-wheels: clean build-cross sdist ## Build ALL wheels (macOS+Linux 3.12+3.13) and publish to PyPI
+	@echo ""
+	@echo "=== Publishing to PyPI ==="
+	@echo "Wheels to publish:"
+	@ls -lh target/wheels/
+	@echo ""
+	$(MATURIN) upload target/wheels/*
+
+publish-local: clean build-all sdist ## Build local wheels and publish to PyPI (current platform only)
+	@echo ""
+	@echo "=== Publishing to PyPI (local platform only) ==="
+	$(MATURIN) upload target/wheels/*

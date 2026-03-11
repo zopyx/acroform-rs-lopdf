@@ -37,22 +37,31 @@ Convenience functions are also available:
 
 """
 
-from acroform._acroform import (  # ty: ignore
-    BUTTON,
-    CHOICE,
-    SIGNATURE,
-    # Field type constants
-    TEXT,
-    AcroFormDocument,
-    FieldValue,
-    FormField,
-    fill_pdf,
-    fill_pdf_bytes,
-    get_pdf_fields,
-    get_pdf_fields_bytes,
-)
+try:
+    from acroform._acroform import (  # ty: ignore
+        BUTTON,
+        CHOICE,
+        SIGNATURE,
+        # Field type constants
+        TEXT,
+        AcroFormDocument,
+        FieldValue,
+        FormField,
+        fill_pdf,
+        fill_pdf_bytes,
+        get_pdf_fields,
+        get_pdf_fields_bytes,
+    )
+except ModuleNotFoundError as e:
+    if "_acroform" in str(e):
+        raise ModuleNotFoundError(
+            "The acroform Rust extension is not built. "
+            "Please run: uv run maturin develop\n"
+            "Or: make develop"
+        ) from e
+    raise
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 
 # Backwards compatibility alias
 FieldType = str

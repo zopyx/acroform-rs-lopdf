@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "acroform"
-version = "0.2.1"
+version = "0.2.2"
 description = "High-level PDF form manipulation library - Python bindings"
 readme = "README.md"
 license = { text = "MIT" }
