@@ -5,7 +5,10 @@ use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use std::collections::HashMap;
 
-use crate::{AcroFormDocument as RustAcroFormDocument, FieldValue as RustFieldValue, FormField as RustFormField};
+use crate::{
+    AcroFormDocument as RustAcroFormDocument, FieldValue as RustFieldValue,
+    FormField as RustFormField,
+};
 
 /// Python wrapper for AcroFormDocument
 #[pyclass(name = "AcroFormDocument")]
@@ -219,24 +222,26 @@ fn py_dict_to_field_values(dict: &Bound<'_, PyDict>) -> PyResult<HashMap<String,
 
     for (key, value) in dict.iter() {
         let key_str: String = key.extract()?;
-        
+
         // Try to convert the value
-        let field_value: RustFieldValue = if let Ok(py_field_value) = value.extract::<PyFieldValue>() {
-            py_field_value.into()
-        } else if let Ok(s) = value.extract::<String>() {
-            RustFieldValue::Text(s)
-        } else if let Ok(b) = value.extract::<bool>() {
-            RustFieldValue::Boolean(b)
-        } else if let Ok(i) = value.extract::<i32>() {
-            RustFieldValue::Integer(i)
-        } else if let Ok(i) = value.extract::<i64>() {
-            RustFieldValue::Integer(i as i32)
-        } else {
-            return Err(PyErr::new::<pyo3::exceptions::PyTypeError, _>(
-                format!("Unsupported field value type for field '{}'", key_str)
-            ));
-        };
-        
+        let field_value: RustFieldValue =
+            if let Ok(py_field_value) = value.extract::<PyFieldValue>() {
+                py_field_value.into()
+            } else if let Ok(s) = value.extract::<String>() {
+                RustFieldValue::Text(s)
+            } else if let Ok(b) = value.extract::<bool>() {
+                RustFieldValue::Boolean(b)
+            } else if let Ok(i) = value.extract::<i32>() {
+                RustFieldValue::Integer(i)
+            } else if let Ok(i) = value.extract::<i64>() {
+                RustFieldValue::Integer(i as i32)
+            } else {
+                return Err(PyErr::new::<pyo3::exceptions::PyTypeError, _>(format!(
+                    "Unsupported field value type for field '{}'",
+                    key_str
+                )));
+            };
+
         result.insert(key_str, field_value);
     }
 
@@ -246,9 +251,13 @@ fn py_dict_to_field_values(dict: &Bound<'_, PyDict>) -> PyResult<HashMap<String,
 /// Convenience function to fill a PDF form from a Python dictionary
 #[pyfunction]
 #[pyo3(signature = (input_path, values, output_path=None))]
-fn fill_pdf(input_path: &str, values: &Bound<'_, PyDict>, output_path: Option<&str>) -> PyResult<Option<Py<pyo3::types::PyBytes>>> {
+fn fill_pdf(
+    input_path: &str,
+    values: &Bound<'_, PyDict>,
+    output_path: Option<&str>,
+) -> PyResult<Option<Py<pyo3::types::PyBytes>>> {
     let mut doc = PyAcroFormDocument::from_pdf(input_path)?;
-    
+
     if let Some(output) = output_path {
         doc.fill_and_save(values, output)?;
         Ok(None)
@@ -286,13 +295,13 @@ fn _acroform(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyAcroFormDocument>()?;
     m.add_class::<PyFormField>()?;
     m.add_class::<PyFieldValue>()?;
-    
+
     // Add FieldType constants
     m.add("TEXT", "Text")?;
     m.add("BUTTON", "Button")?;
     m.add("CHOICE", "Choice")?;
     m.add("SIGNATURE", "Signature")?;
-    
+
     m.add_function(wrap_pyfunction!(fill_pdf, m)?)?;
     m.add_function(wrap_pyfunction!(fill_pdf_bytes, m)?)?;
     m.add_function(wrap_pyfunction!(get_pdf_fields, m)?)?;
