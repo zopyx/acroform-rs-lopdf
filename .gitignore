@@ -38,6 +38,8 @@ build/
 # Maturin
 *.whl
 *.tar.gz
+*.dylib
+*.dSYM/
 
 # Generated PDF files
 *.pdf

@@ -38,7 +38,77 @@ jobs:
 
       - name: Tests (${{ matrix.features.name }})
         run: cargo test ${{ matrix.features.flags }} --locked --package acroform
-        
+
+  # Build Python wheels for all platforms
+  build-wheels:
+    needs: [test]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macOS ARM64 (Apple Silicon)
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            arch: arm64
+          # macOS x86_64 (Intel)
+          - os: macos-13
+            target: x86_64-apple-darwin
+            arch: x86_64
+          # Linux x86_64
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            arch: x86_64
+          # Linux ARM64
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            arch: arm64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          args: --release --out dist -i python3.12 python3.13
+          sccache: 'true'
+          manylinux: auto
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.target }}
+          path: dist/*.whl
+
+  # Build source distribution
+  build-sdist:
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build sdist
+        uses: PyO3/maturin-action@v1
+        with:
+          command: sdist
+          args: --out dist
+
+      - name: Upload sdist
+        uses: actions/upload-artifact@v4
+        with:
+          name: sdist
+          path: dist/*.tar.gz
+
+  # Publish Rust crate to crates.io
   publish-crates:
     needs: [test]
     runs-on: ubuntu-latest
@@ -62,8 +132,40 @@ jobs:
         if: success()
         run: echo "✓ All publishable workspace crates published to crates.io"
 
+  # Publish Python wheels to PyPI
+  publish-pypi:
+    needs: [build-wheels, build-sdist]
+    runs-on: ubuntu-latest
+    environment: Publish
+    permissions:
+      id-token: write  # For trusted publishing
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: wheels-*
+          merge-multiple: true
+
+      - name: Download sdist
+        uses: actions/download-artifact@v4
+        with:
+          name: sdist
+          path: dist
+
+      - name: List artifacts
+        run: ls -la dist/
+
+      - name: Publish to PyPI
+        uses: PyO3/maturin-action@v1
+        with:
+          command: upload
+          args: --non-interactive --skip-existing dist/*
+        env:
+          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+
   summary:
-    needs: [publish-crates]
+    needs: [publish-crates, publish-pypi]
     runs-on: ubuntu-latest
     if: always()
     steps:
@@ -79,6 +181,15 @@ jobs:
             echo "⊘ Crates publishing skipped"
           else
             echo "✗ Crates publishing failed"
+          fi
+
+          # PyPI
+          if [ "${{ needs.publish-pypi.result }}" == "success" ]; then
+            echo "✓ Python wheels published to PyPI"
+          elif [ "${{ needs.publish-pypi.result }}" == "skipped" ]; then
+            echo "⊘ PyPI publishing skipped"
+          else
+            echo "✗ PyPI publishing failed"
           fi
 
           # Exit with failure if any job failed

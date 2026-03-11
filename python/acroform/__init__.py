@@ -52,7 +52,7 @@ from acroform._acroform import (  # ty: ignore
     get_pdf_fields_bytes,
 )
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 # Backwards compatibility alias
 FieldType = str
