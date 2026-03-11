@@ -68,7 +68,7 @@ jobs:
 
       - name: Install Python dependencies
         run: |
-          uv pip install maturin pytest ruff mypy
+          uv pip install maturin pytest ruff ty
 
       - name: Build Python package (develop mode)
         run: |
@@ -81,7 +81,7 @@ jobs:
       - name: Run Python linters
         run: |
           uv run ruff check python/
-          uv run mypy python/acroform
+          uv run ty check python/
         if: matrix.python-version == '3.12'
 
   check-format:

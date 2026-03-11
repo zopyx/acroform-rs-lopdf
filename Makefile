@@ -31,7 +31,7 @@ test-python: ## Run Python tests
 
 lint: ## Run linters on Python code
 	$(UV) run ruff check python/
-	$(UV) run mypy python/acroform
+	$(UV) run ty check python/
 
 format: ## Format Python and Rust code
 	$(UV) run ruff format python/
@@ -48,6 +48,6 @@ clean: ## Clean build artifacts
 
 venv: ## Create a virtual environment
 	$(UV) venv $(VENV) --python 3.12
-	$(UV) pip install maturin pytest ruff mypy
+	$(UV) pip install maturin pytest ruff ty
 
 install-dev: venv develop ## Setup development environment

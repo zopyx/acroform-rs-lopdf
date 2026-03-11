@@ -28,7 +28,7 @@ requires-python = ">=3.12"
 dependencies = []
 
 [project.optional-dependencies]
-dev = ["pytest", "maturin", "mypy", "ruff"]
+dev = ["pytest", "maturin", "ty", "ruff"]
 
 [project.scripts]
 pdf-forms = "pdf_forms.cli:main"
@@ -43,11 +43,6 @@ features = ["python-bindings"]
 module-name = "acroform._acroform"
 python-source = "python"
 
-[tool.mypy]
-python_version = "3.12"
-strict = true
-warn_return_any = true
-warn_unused_configs = true
 
 [tool.ruff]
 line-length = 100
@@ -56,6 +51,11 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "D"]
 ignore = ["D100", "D104"]
+
+[tool.ruff.lint.per-file-ignores]
+"python/tests/*" = ["D"]
+"python/examples/*" = ["D"]
+"python/pdf_forms/*" = ["D"]
 
 [tool.pytest.ini_options]
 testpaths = ["python/tests"]

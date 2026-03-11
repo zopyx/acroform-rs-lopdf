@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Simple example of filling a PDF form using acroform.
+"""Simple example of filling a PDF form using acroform.
 
 This example demonstrates how to:
 1. Load a PDF form
@@ -43,7 +42,7 @@ def main():
             if field.field_type == acroform.TEXT:
                 # Fill with sample text
                 values[field.name] = f"Filled: {field.name}"
-            elif field.field_type == acroform.FieldType.Button:
+            elif field.field_type == acroform.BUTTON:
                 # Fill checkboxes with True
                 values[field.name] = True
 

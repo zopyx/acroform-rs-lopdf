@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Example of filling a PDF form in-memory using acroform.
+"""Example of filling a PDF form in-memory using acroform.
 
 This example demonstrates how to:
 1. Load a PDF from bytes (e.g., from a database or HTTP request)

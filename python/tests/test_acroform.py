@@ -2,11 +2,10 @@
 
 import os
 import tempfile
-
-import pytest
+from typing import Any
 
 import acroform
-
+import pytest
 
 # Path to a test PDF form - update this to point to an actual test file
 TEST_PDF_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "tests", "af8.pdf")
@@ -157,7 +156,7 @@ class TestAcroFormDocument:
             pytest.skip("No text fields in test PDF")
 
         # Fill using FieldValue
-        values = {text_field: acroform.FieldValue.text("Test Value")}
+        values: dict[str, Any] = {text_field: acroform.FieldValue.text("Test Value")}
 
         with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
             output_path = f.name
@@ -186,7 +185,7 @@ class TestAcroFormDocument:
             if field.field_type == acroform.TEXT:
                 values[field.name] = "Native String"
                 break
-            elif field.field_type == acroform.FieldType.Button:
+            elif field.field_type == acroform.BUTTON:
                 values[field.name] = True
                 break
 
@@ -238,11 +237,7 @@ class TestConvenienceFunctions:
             output_path = f.name
 
         try:
-            result = acroform.fill_pdf(
-                TEST_PDF_PATH, 
-                {text_field: "Test"}, 
-                output_path
-            )
+            result = acroform.fill_pdf(TEST_PDF_PATH, {text_field: "Test"}, output_path)
             assert result is None
             assert os.path.exists(output_path)
         finally:
