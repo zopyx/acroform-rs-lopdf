@@ -35,6 +35,9 @@
 mod api;
 mod field;
 
+#[cfg(feature = "python-bindings")]
+pub mod python;
+
 pub use api::{AcroFormDocument, FieldValue, FormField};
 pub use field::FieldType;
 

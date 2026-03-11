@@ -20,7 +20,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-acroform = "0.1.0"
+acroform = "0.2.0"
 ```
 
 ## Example
@@ -115,6 +115,33 @@ Fields can be organized hierarchically in PDF forms. This library constructs ful
 ### Appearance Updates
 
 When filling forms, the library sets the `NeedAppearances` flag, which tells PDF viewers to regenerate field appearances. This ensures that filled values are properly displayed.
+
+## Python Bindings
+
+High-performance Python bindings are available:
+
+```bash
+pip install acroform
+```
+
+Requires Python 3.12 or later.
+
+```python
+import acroform
+
+# Load a PDF form
+doc = acroform.AcroFormDocument.from_pdf("form.pdf")
+
+# List all fields
+fields = doc.fields()
+for field in fields:
+    print(f"Field: {field.name} ({field.field_type})")
+
+# Fill fields and save
+doc.fill_and_save({"name": "John Doe"}, "filled_form.pdf")
+```
+
+See [PYTHON_BINDINGS.md](PYTHON_BINDINGS.md) for detailed documentation.
 
 ## License
 
